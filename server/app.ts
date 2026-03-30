@@ -10,6 +10,7 @@ import submissionRoutes from './routes/submissionRoutes.ts';
 import userRoutes from './routes/userRoutes.ts';
 import messageRoutes from './routes/messageRoutes.ts';
 import contestRoutes from './routes/contestRoutes.ts';
+import tagRoutes from './routes/tagRoutes.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -30,6 +31,7 @@ export function createExpressApp() {
   app.use('/api/users', userRoutes);
   app.use('/api/messages', messageRoutes);
   app.use('/api/contests', contestRoutes);
+  app.use('/api/tags', tagRoutes);
 
   // Health check
   app.get('/api/health', (req, res) => {

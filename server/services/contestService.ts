@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Contest } from '../models/Contest.ts';
 import { User } from '../models/User.ts';
 import { Submission } from '../models/Submission.ts';
@@ -129,6 +130,9 @@ export class ContestService {
   }
 
   async getLeaderboard(contestId: string) {
+    if (!mongoose.Types.ObjectId.isValid(contestId)) {
+      throw new Error('Invalid contest ID');
+    }
     const contest = await Contest.findById(contestId).populate('problems');
     if (!contest) {
       throw new Error('Contest not found');
@@ -136,8 +140,8 @@ export class ContestService {
 
     // Get all submissions for this contest's problems within the time range
     const submissions = await Submission.find({
-      problem_id: { $in: contest.problems.map((p: any) => p._id) },
-      created_at: { $gte: contest.start_time, $lte: contest.end_time },
+      contest_id: contestId,
+      user_id: { $in: contest.participants },
       verdict: 'Accepted'
     }).populate('user_id', 'username avatar');
 

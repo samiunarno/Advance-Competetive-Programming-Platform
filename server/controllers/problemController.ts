@@ -14,7 +14,8 @@ export const getAllProblems = async (req: Request, res: Response) => {
 export const getProblemById = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
-    const problem = await problemService.getProblemById(req.params.id, userId);
+    const isAdmin = (req as any).user?.role === 'admin';
+    const problem = await problemService.getProblemById(req.params.id, userId, isAdmin);
     res.json(problem);
   } catch (error: any) {
     if (error.message === 'Problem not found') {

@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Submission } from '../models/Submission.ts';
 import { contestService } from './contestService.ts';
 import { broadcastGlobal } from '../websocket.ts';
@@ -12,11 +13,12 @@ export class SubmissionService {
   }
 
   async createSubmission(data: any, userId: string) {
-    const { problem_id, code, language, verdict, execution_output, execution_time, memory_usage } = data;
+    const { problem_id, contest_id, code, language, verdict, execution_output, execution_time, memory_usage } = data;
 
     const submission = new Submission({
       user_id: userId,
       problem_id,
+      contest_id: (contest_id && mongoose.Types.ObjectId.isValid(contest_id)) ? contest_id : null,
       code,
       language,
       verdict: verdict || 'Pending',
@@ -41,7 +43,7 @@ export class SubmissionService {
         details: {
           problemTitle: (populatedSubmission?.problem_id as any)?.title,
           problemId: problem_id,
-          verdict: verdict
+          verdict: submission.verdict
         }
       });
     }
@@ -51,9 +53,18 @@ export class SubmissionService {
 
     // Check if this submission is part of an active contest
     try {
-      const activeContest = await contestService.getActiveContestByProblemId(problem_id);
-      if (activeContest) {
-        await contestService.broadcastLeaderboardUpdate(activeContest._id.toString());
+      let contestToUpdate = contest_id;
+      
+      // If contest_id not provided, check if problem belongs to an active contest
+      if (!contestToUpdate) {
+        const activeContest = await contestService.getActiveContestByProblemId(problem_id);
+        if (activeContest) {
+          contestToUpdate = activeContest._id.toString();
+        }
+      }
+
+      if (contestToUpdate && mongoose.Types.ObjectId.isValid(contestToUpdate)) {
+        await contestService.broadcastLeaderboardUpdate(contestToUpdate);
       }
     } catch (error) {
       console.error('Failed to broadcast contest update', error);

@@ -27,10 +27,14 @@ export class ProblemService {
     return await Problem.find(filter).sort(sortOption).populate('created_by', 'username');
   }
 
-  async getProblemById(id: string, userId?: string) {
+  async getProblemById(id: string, userId?: string, isAdmin: boolean = false) {
     const problem = await Problem.findById(id).populate('created_by', 'username');
     if (!problem) {
       throw new Error('Problem not found');
+    }
+
+    if (!isAdmin && problem.visibility === 'private') {
+      throw new Error('Problem not found'); // Hide existence of private problems
     }
 
     let userSubmissionCount = 0;

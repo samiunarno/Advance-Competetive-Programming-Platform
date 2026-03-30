@@ -7,6 +7,7 @@ import http from 'http';
 import { createExpressApp } from './server/app.ts';
 import { connectToDatabase } from './server/db.ts';
 import { initWebSocket } from './server/websocket.ts';
+import { tagService } from './server/services/tagService.ts';
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function startServer() {
   await connectToDatabase();
+  await tagService.seedTags();
   
   const app = createExpressApp();
   const PORT = 3000;

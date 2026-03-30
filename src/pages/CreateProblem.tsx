@@ -18,6 +18,7 @@ export default function CreateProblem() {
     title: '',
     description: '',
     difficulty: 'Easy',
+    points: '100',
     input_format: '',
     output_format: '',
     sample_input: '',
@@ -30,13 +31,27 @@ export default function CreateProblem() {
     tags: [] as string[],
   });
 
+  const [availableTags, setAvailableTags] = useState<{ _id: string, name: string }[]>([]);
   const isEditMode = !!id;
 
   useEffect(() => {
+    fetchTags();
     if (isEditMode) {
       fetchProblem();
     }
   }, [id]);
+
+  const fetchTags = async () => {
+    try {
+      const res = await api.tags.getAll();
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableTags(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch tags:', error);
+    }
+  };
 
   const fetchProblem = async () => {
     try {
@@ -47,6 +62,7 @@ export default function CreateProblem() {
           title: data.title || '',
           description: data.description || '',
           difficulty: data.difficulty || 'Easy',
+          points: data.points ? data.points.toString() : '100',
           input_format: data.input_format || '',
           output_format: data.output_format || '',
           sample_input: data.sample_input || '',
@@ -72,17 +88,6 @@ export default function CreateProblem() {
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [tagInput, setTagInput] = useState('');
-
-  const handleAddTag = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && tagInput.trim()) {
-      e.preventDefault();
-      if (!formData.tags.includes(tagInput.trim())) {
-        setFormData(prev => ({ ...prev, tags: [...prev.tags, tagInput.trim()] }));
-      }
-      setTagInput('');
-    }
-  };
 
   const removeTag = (tagToRemove: string) => {
     setFormData(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tagToRemove) }));
@@ -211,6 +216,7 @@ export default function CreateProblem() {
     try {
       const payload = {
         ...formData,
+        points: parseInt(formData.points) || 100,
         start_time: formData.start_time || null,
         deadline: formData.deadline || null,
         daily_limit: formData.daily_submission_limit ? parseInt(formData.daily_submission_limit) : null,
@@ -272,7 +278,7 @@ export default function CreateProblem() {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">{t('create_problem.difficulty')}</label>
             <select
@@ -286,15 +292,34 @@ export default function CreateProblem() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Visibility</label>
-            <select
+            <label className="block text-sm font-medium text-slate-300 mb-1">Points</label>
+            <input
+              type="number"
+              required
+              min="0"
               className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-emerald-500 outline-none"
-              value={formData.visibility}
-              onChange={e => setFormData({ ...formData, visibility: e.target.value })}
-            >
-              <option value="public">Public</option>
-              <option value="private">Private</option>
-            </select>
+              value={formData.points}
+              onChange={e => setFormData({ ...formData, points: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Visibility</label>
+            <div className="flex items-center gap-3 h-[42px]">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, visibility: formData.visibility === 'public' ? 'private' : 'public' })}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-800 ${
+                  formData.visibility === 'public' ? 'bg-emerald-600' : 'bg-slate-700'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    formData.visibility === 'public' ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <span className="text-sm text-slate-300 capitalize">{formData.visibility}</span>
+            </div>
           </div>
         </div>
 
@@ -363,7 +388,7 @@ export default function CreateProblem() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Tags (Press Enter to add)</label>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Tags</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {formData.tags.map(tag => (
               <span key={tag} className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded-md text-xs flex items-center gap-1">
@@ -372,14 +397,22 @@ export default function CreateProblem() {
               </span>
             ))}
           </div>
-          <input
-            type="text"
+          <select
             className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-emerald-500 outline-none"
-            value={tagInput}
-            onChange={e => setTagInput(e.target.value)}
-            onKeyDown={handleAddTag}
-            placeholder="e.g. dynamic-programming, math, strings"
-          />
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val && !formData.tags.includes(val)) {
+                setFormData(prev => ({ ...prev, tags: [...prev.tags, val] }));
+              }
+              e.target.value = "";
+            }}
+            value=""
+          >
+            <option value="" disabled>Select a tag to add...</option>
+            {availableTags.filter(t => !formData.tags.includes(t.name)).map(tag => (
+              <option key={tag._id} value={tag.name}>{tag.name}</option>
+            ))}
+          </select>
         </div>
 
         <div>

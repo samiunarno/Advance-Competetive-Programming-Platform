@@ -1,5 +1,6 @@
 import { Achievement, UserAchievement } from '../models/Achievement.ts';
 import { Submission } from '../models/Submission.ts';
+import { User } from '../models/User.ts';
 import { broadcastGlobal } from '../websocket.ts';
 
 export class AchievementService {
@@ -50,6 +51,7 @@ export class AchievementService {
 
       if (type === 'submissions' && stats.submissions >= value) earned = true;
       if (type === 'accepted' && stats.accepted >= value) earned = true;
+      if (type === 'streak' && stats.streak >= value) earned = true;
       // Add other criteria checks here
 
       if (earned) {
@@ -60,8 +62,22 @@ export class AchievementService {
         await newEarned.save();
 
         // Broadcast to global feed
-        // We'll need user info for the broadcast
-        // For now, we'll assume the caller handles the broadcast or we fetch user here
+        const user = await User.findById(userId);
+        if (user) {
+          broadcastGlobal('global_activity', {
+            type: 'achievement',
+            user: {
+              id: user._id,
+              username: user.username,
+              avatar: user.avatar
+            },
+            details: {
+              achievementName: achievement.name,
+              achievementIcon: achievement.icon,
+              achievementDescription: achievement.description
+            }
+          });
+        }
       }
     }
   }
@@ -71,6 +87,8 @@ export class AchievementService {
       { name: 'First Step', description: 'Make your first submission', icon: 'Zap', criteria: { type: 'submissions', value: 1 } },
       { name: 'Problem Solver', description: 'Solve 5 problems', icon: 'CheckCircle', criteria: { type: 'accepted', value: 5 } },
       { name: 'Code Master', description: 'Solve 25 problems', icon: 'Trophy', criteria: { type: 'accepted', value: 25 } },
+      { name: 'Consistent', description: 'Maintain a 3-day streak', icon: 'Flame', criteria: { type: 'streak', value: 3 } },
+      { name: 'Unstoppable', description: 'Maintain a 7-day streak', icon: 'Zap', criteria: { type: 'streak', value: 7 } },
     ];
 
     for (const ach of defaultAchievements) {

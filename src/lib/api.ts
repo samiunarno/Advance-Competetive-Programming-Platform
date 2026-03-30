@@ -104,4 +104,18 @@ export const api = {
     register: (id: string) => safeFetch(`${API_URL}/contests/${id}/register`, { method: 'POST' }),
     getLeaderboard: (id: string) => safeFetch(`${API_URL}/contests/${id}/leaderboard`),
   },
+  tags: {
+    getAll: () => safeFetch(`${API_URL}/tags`),
+    create: (data: any) => safeFetch(`${API_URL}/tags`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+    update: (id: string, data: any) => safeFetch(`${API_URL}/tags/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+    delete: (id: string) => safeFetch(`${API_URL}/tags/${id}`, { method: 'DELETE' }),
+  },
 };

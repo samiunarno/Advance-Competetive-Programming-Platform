@@ -25,6 +25,7 @@ import ProblemManagement from './pages/admin/ProblemManagement';
 import ContestManagement from './pages/admin/ContestManagement';
 import CreateContest from './pages/admin/CreateContest';
 import AdminInbox from './pages/admin/AdminInbox';
+import TagManagement from './pages/admin/TagManagement';
 
 import Profile from './pages/Profile';
 
@@ -89,6 +90,7 @@ function AppContent() {
           <Route path="contests/create" element={<CreateContest />} />
           <Route path="contests/edit/:id" element={<CreateContest />} />
           <Route path="inbox" element={<AdminInbox />} />
+          <Route path="tags" element={<TagManagement />} />
         </Route>
       </Routes>
       <SupportChat />

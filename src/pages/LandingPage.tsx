@@ -1,11 +1,14 @@
-import { Link } from 'react-router-dom';
-import { ArrowRight, Code2, Globe, Cpu, Zap, Terminal, Trophy, ChevronDown, Lock } from 'lucide-react';
-import { motion, useScroll, useTransform, useMotionValue, useMotionTemplate } from 'motion/react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Code2, Globe, Cpu, Zap, Terminal, Trophy, ChevronDown, Lock, Send, MessageSquare } from 'lucide-react';
+import { motion, useScroll, useTransform, useMotionValue, useMotionTemplate, AnimatePresence } from 'motion/react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Float, Stars, Environment, PerspectiveCamera, Text, RoundedBox, MeshTransmissionMaterial } from '@react-three/drei';
 import { useRef, useMemo, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../lib/api';
+import toast from 'react-hot-toast';
 
 function CodeBlock({ position }: { position: [number, number, number] }) {
   const group = useRef<THREE.Group>(null);
@@ -228,6 +231,8 @@ const FeatureCard = ({ title, desc, icon: Icon, index }: { title: string, desc: 
 
 export default function LandingPage() {
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -236,6 +241,35 @@ export default function LandingPage() {
 
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
   const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+
+  // Contact Form State
+  const [contactMessage, setContactMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      toast.error('Please login to send a message');
+      navigate('/login');
+      return;
+    }
+    if (!contactMessage.trim()) return;
+
+    setIsSending(true);
+    try {
+      const res = await api.messages.send(contactMessage);
+      if (res.ok) {
+        toast.success('Message sent to admin!');
+        setContactMessage('');
+      } else {
+        toast.error('Failed to send message');
+      }
+    } catch (error) {
+      toast.error('Error sending message');
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   return (
     <div ref={containerRef} className="min-h-screen bg-[#050505] text-white selection:bg-emerald-500/30 selection:text-white overflow-hidden">
@@ -491,6 +525,66 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* CONTACT ADMIN SECTION */}
+      {user?.role !== 'admin' && (
+        <section className="py-40 px-6 md:px-12 lg:px-24 border-t border-white/5 relative overflow-hidden">
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
+          
+          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-24 items-center relative z-10">
+            <div>
+              <span className="text-xs font-mono uppercase tracking-widest text-emerald-500 mb-6 block">04 — Support</span>
+              <h2 className="text-5xl md:text-7xl font-serif leading-[1.1] mb-8">
+                Need Help?<br/>
+                <span className="text-neutral-600">Message Admin</span>
+              </h2>
+              <p className="text-xl text-neutral-400 font-light leading-relaxed max-w-md">
+                Have questions about a problem, contest, or your account? Send a direct message to our team.
+              </p>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="bg-neutral-900/50 border border-white/10 p-8 rounded-3xl backdrop-blur-sm"
+            >
+              <form onSubmit={handleSendMessage} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-mono text-neutral-500 uppercase tracking-wider">Your Message</label>
+                  <textarea
+                    value={contactMessage}
+                    onChange={(e) => setContactMessage(e.target.value)}
+                    placeholder="Type your message here..."
+                    rows={4}
+                    className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 text-white focus:border-emerald-500/50 focus:outline-none transition-colors resize-none"
+                  />
+                </div>
+                
+                <button
+                  type="submit"
+                  disabled={isSending || !contactMessage.trim()}
+                  className="w-full group relative px-8 py-4 bg-emerald-600 text-white font-medium text-lg rounded-2xl overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:bg-emerald-500"
+                >
+                  <span className="relative flex items-center justify-center gap-2">
+                    {isSending ? 'Sending...' : (
+                      <>
+                        Send Message <Send className="w-4 h-4" />
+                      </>
+                    )}
+                  </span>
+                </button>
+                
+                {!user && (
+                  <p className="text-center text-xs text-neutral-500 font-mono">
+                    * You must be <Link to="/login" className="text-emerald-500 hover:underline">logged in</Link> to send a message.
+                  </p>
+                )}
+              </form>
+            </motion.div>
+          </div>
+        </section>
+      )}
 
       {/* FOOTER / CTA */}
       <footer className="py-40 px-6 md:px-12 lg:px-24 border-t border-white/10 bg-neutral-950 relative overflow-hidden">

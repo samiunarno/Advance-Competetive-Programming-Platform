@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Users, FileCode, LayoutDashboard, LogOut, MessageSquare, Trophy } from 'lucide-react';
+import { Users, FileCode, LayoutDashboard, LogOut, MessageSquare, Trophy, Tag } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -57,6 +57,17 @@ export default function AdminLayout() {
         >
           <MessageSquare className="w-4 h-4" />
           Inbox
+        </Link>
+        <Link 
+          to="/admin/tags" 
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${
+            isActive('/admin/tags') 
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+          }`}
+        >
+          <Tag className="w-4 h-4" />
+          Tags
         </Link>
       </div>
 
@@ -116,6 +127,18 @@ export default function AdminLayout() {
           >
             <MessageSquare className="w-5 h-5" />
             Inbox
+          </Link>
+
+          <Link 
+            to="/admin/tags" 
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              isActive('/admin/tags') 
+                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            <Tag className="w-5 h-5" />
+            Tags
           </Link>
         </nav>
 

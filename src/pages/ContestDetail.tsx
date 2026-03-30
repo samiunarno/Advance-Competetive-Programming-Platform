@@ -283,7 +283,7 @@ export default function ContestDetail() {
                 <div>
                   <h3 className="text-lg font-medium text-white group-hover:text-emerald-400 transition-colors flex items-center gap-2">
                     {contest.status === 'active' && contest.is_registered ? (
-                      <Link to={`/problem/${problem.id}`}>{problem.title}</Link>
+                      <Link to={`/problem/${problem.id}?contestId=${contest.id}`}>{problem.title}</Link>
                     ) : (
                       <span className="cursor-not-allowed opacity-80">{problem.title}</span>
                     )}
@@ -311,7 +311,7 @@ export default function ContestDetail() {
                   </span>
                 )}
                 <Link
-                  to={`/problem/${problem.id}`}
+                  to={`/problem/${problem.id}?contestId=${contest.id}`}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     contest.status === 'active' && contest.is_registered
                       ? 'bg-white text-black hover:bg-neutral-200' 
